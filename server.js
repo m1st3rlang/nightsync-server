@@ -7,6 +7,7 @@ const app = express();
 app.use(cors());
 
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
     origin: "*"
@@ -16,20 +17,30 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  socket.on("joinRoom", (room) => {
+  socket.on("joinRoom", ({ room, username }) => {
     socket.join(room);
-    console.log(`User ${socket.id} joined room ${room}`);
+    socket.room = room;
+    socket.username = username;
+
+    io.to(room).emit("chatMessage", `🔔 ${username} entrou na sala`);
   });
 
-  socket.on("chatMessage", ({ room, message }) => {
-    io.to(room).emit("chatMessage", message);
+  socket.on("chatMessage", ({ room, message, username }) => {
+    io.to(room).emit("chatMessage", `💬 ${username}: ${message}`);
   });
 
   socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+    if (socket.room && socket.username) {
+      io.to(socket.room).emit(
+        "chatMessage",
+        `🚪 ${socket.username} saiu da sala`
+      );
+    }
   });
 });
 
-server.listen(3000, () => {
-  console.log("Server running on port 3000");
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, () => {
+  console.log("Server running on port", PORT);
 });
