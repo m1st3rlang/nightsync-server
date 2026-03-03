@@ -15,7 +15,6 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
 
   socket.on("joinRoom", ({ room, username }) => {
     socket.join(room);
@@ -27,6 +26,10 @@ io.on("connection", (socket) => {
 
   socket.on("chatMessage", ({ room, message, username }) => {
     io.to(room).emit("chatMessage", `💬 ${username}: ${message}`);
+  });
+
+  socket.on("videoAction", ({ room, action, time }) => {
+    socket.to(room).emit("videoAction", { action, time });
   });
 
   socket.on("disconnect", () => {
